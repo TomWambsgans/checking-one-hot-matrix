@@ -1,0 +1,63 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\setlist{itemsep=1pt,topsep=3pt,parsep=0pt}
+\usepackage[colorlinks=true,linkcolor=blue!50!black,citecolor=blue!50!black,urlcolor=blue!50!black]{hyperref}
+
+\newcommand{\F}{\mathbb{F}}
+\newcommand{\eq}{\mathrm{eq}}
+\newcommand{\mle}[1]{\widetilde{#1}}
+% tuples are bold, their coordinates are not
+\newcommand{\vj}{\mathbf{j}}
+\newcommand{\vu}{\mathbf{u}}
+\newcommand{\vr}{\mathbf{r}}
+\newcommand{\vs}{\mathbf{s}}
+\newcommand{\vt}{\mathbf{t}}
+\newcommand{\vx}{\mathbf{X}}
+\newcommand{\vone}{\mathbf{1}}
+\newcommand{\vrho}{\boldsymbol{\rho}}
+\newcommand{\vsigma}{\boldsymbol{\sigma}}
+
+
+\begin{document}
+\begin{center}\Large\textbf{Testing one-hotness of a multilinear polynomial over a binary field}\end{center}
+\vspace{0.5em}
+
+
+\begin{itemize}
+\item $\F$ is a cryptographically large binary field ($\F_{2^{128}}$, $\F_{2^{192}}$, \dots).
+\item Bold letters are tuples: $\vx = (X_1, \dots, X_m)$, $\vone + \vx = (1 + X_1, \dots, 1 + X_m)$, $\mathbf{Y} = (Y_1, \dots, Y_n)$.
+\item $\F^{<2}[\vx]$ is the set of multilinear polynomials in $X_1, \dots, X_m$.
+\item $f \in \F^{<2}[\vx]$ is \emph{one-hot} if $f = \eq(\vx, \vu)$ for some $\vu \in \{0,1\}^m$: on the cube, it is $1$ at $\vu$ and $0$ elsewhere.
+\end{itemize}
+
+Given a committed $A \in \F^{<2}[\vx, \mathbf{Y}]$, we want to check that $A(\cdot, \vj)$ is one-hot for every $\vj \in \{0,1\}^n$.
+
+\paragraph{The trick.} For any $f \in \F^{<2}[\vx]$:
+\begin{equation}\label{eq:id}
+\boxed{\; f \text{ is one-hot} \iff f(\vx) \cdot f(\vone + \vx) = \prod_{h=1}^m X_h(1 + X_h) \;}
+\end{equation}
+
+\begin{proof}
+($\Rightarrow$) Let $f = \eq(\vx, \vu)$. It has one factor per coordinate: $X_h$ if $u_h = 1$, and $1 + X_h$ if $u_h = 0$. In $f(\vone + \vx)$ each factor becomes the other one. So coordinate $h$ contributes $X_h(1 + X_h)$ to $f(\vx) \cdot f(\vone + \vx)$, whatever $u_h$ is.
+
+($\Leftarrow$) Write $\vx_{<m} = (X_1, \dots, X_{m-1})$, so that $f(\vx) = (1 + X_m) \cdot f(\vx_{<m}, 0) + X_m \cdot f(\vx_{<m}, 1)$.
+
+Set $X_m = 0$ in \eqref{eq:id}. The right side vanishes, so $f(\vx_{<m}, 0) \cdot f(\vone + \vx_{<m}, 1) = 0$, and one of $f(\vx_{<m}, 0)$, $f(\vx_{<m}, 1)$ is the zero polynomial. Hence $f = X_m \cdot g$ or $f = (1 + X_m) \cdot g$, for some $g \in \F^{<2}[\vx_{<m}]$. In both cases
+\[
+f(\vx) \cdot f(\vone + \vx) = X_m (1 + X_m) \cdot g(\vx_{<m}) \cdot g(\vone + \vx_{<m}) ,
+\]
+so, dividing by $X_m(1 + X_m)$, $g$ satisfies \eqref{eq:id} with one variable less. Repeating for each variable, $f$ is a constant $c$ times one factor per coordinate, $X_h$ or $1 + X_h$, and $c^2 = 1$. So $c = 1$, because $c^2 + 1 = (c + 1)^2$ (the only part where characteristic $2$ matters). Hence $f = \eq(\vx, \vu)$, where $u_h = 1$ if the factor is $X_h$ and $u_h = 0$ if it is $1 + X_h$.
+\end{proof}
+
+\paragraph{Protocol.} Every $A(\cdot, \vj)$ is one-hot if and only if, as polynomials in $\vx$ and $\mathbf{Y}$,
+\begin{equation}\label{eq:test}
+\sum_{\vj \in \{0,1\}^n} \eq(\mathbf{Y}, \vj) \cdot A(\vx, \vj) \cdot A(\vone + \vx, \vj) = \prod_{h=1}^m X_h(1 + X_h) .
+\end{equation}
+
+After $A$ is committed, the verifier samples random $\vr \in \F^m$ and $\vrho \in \F^n$, and \eqref{eq:test} is checked at $(\vx, \mathbf{Y}) = (\vr, \vrho)$ via a degree-3 sumcheck.
+
+\end{document}
